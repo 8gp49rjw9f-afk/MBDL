@@ -2,8 +2,10 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QWidget,
     QHBoxLayout,
+    QVBoxLayout,
     QListWidget,
     QListWidgetItem,
+    QPushButton,
     QStackedWidget
 )
 
@@ -28,7 +30,23 @@ from pages.amortissement import AmortissementPage
 from pages.rendement import RendementPage
 from pages.devises import DevisesPage
 from pages.impot import ImpotPage
-from pages.a_propos import AProposPage
+from pages.infos_dialog import InfosDialog
+
+
+# =========================================
+# REGLAGE DE LA COLONNE DE GAUCHE
+# =========================================
+
+LISTE_HAUT = 18
+
+LISTE_HAUTEUR = 575
+
+BOUTON_BAS = 20
+
+# Taille commune des boutons de gauche
+BOUTON_LARGEUR = 200
+
+BOUTON_HAUTEUR = 28
 
 
 class MainWindow(QMainWindow):
@@ -37,7 +55,7 @@ class MainWindow(QMainWindow):
 
         super().__init__()
 
-        self.setWindowTitle("Mon bas de laine")
+        self.setWindowTitle("Mon bas de laine v1.41")
         self.setFixedSize(1400, 750)
 
         central = QWidget()
@@ -48,83 +66,198 @@ class MainWindow(QMainWindow):
 
 
         # =========================
+        # COLONNE DE GAUCHE
+        # =========================
+
+        colonne = QVBoxLayout()
+
+        colonne.setSpacing(0)
+
+        colonne.setContentsMargins(0, 0, 0, 0)
+
+
+        # =========================
         # MENU GAUCHE
         # =========================
 
         self.menu = QListWidget()
         self.menu.setFixedWidth(230)
 
-        # 0 --- ACTIFS
+        self.menu.setFixedHeight(
+            LISTE_HAUTEUR
+        )
+
+        # ---------------------------------
+        # ACTIFS
+        # ---------------------------------
+
         self.ajouter_separateur("ACTIFS")
-        # 1
+
         self.menu.addItem("Entrées")
-        # 2
         self.menu.addItem("Sorties")
-
-        # 3 - Patrimoine
         self.menu.addItem("Patrimoine")
-
-        # 4
         self.menu.addItem("Taxes et impôts")
 
-        # 5 --- INVESTISSEMENTS
+        # ---------------------------------
+        # INVESTISSEMENTS
+        # ---------------------------------
+
         self.ajouter_separateur("INVESTISSEMENTS")
-        # 6
+
         self.menu.addItem("Placements")
-        # 7
         self.menu.addItem("Cotisations REER/CELI")
-        # 8
         self.menu.addItem("Bourse et Cryptos")
 
-        # 8 --- DETTES
+        # ---------------------------------
+        # DETTES
+        # ---------------------------------
+
         self.ajouter_separateur("DETTES")
-        # 9
+
         self.menu.addItem("Prêts")
-        # 10
         self.menu.addItem("Hypothèques")
 
-        # 11 --- MON DOSSIER
-        self.ajouter_separateur("MON DOSSIER")
-        # 12
-        self.menu.addItem("Assurances")
+        # ---------------------------------
+        # TOTAUX
+        # ---------------------------------
 
-        # 13 --- TOTAUX
         self.ajouter_separateur("TOTAUX")
-        # 14
+
         self.menu.addItem("Cumulatif")
-        # 15
-        self.ajouter_ligne_vide()
 
-        # 16 --- BUDGETS
+        # ---------------------------------
+        # GRAND ESPACE - avant BUDGETS
+        # ---------------------------------
+
+        self.ajouter_grand_espace()
+
+        # ---------------------------------
+        # BUDGETS
+        # ---------------------------------
+
         self.ajouter_separateur("BUDGETS")
-        # 17
-        self.menu.addItem("Budgets mensuels")
-        # 18
-        self.menu.addItem("Budgets prévisionnels")
-        # 19
-        self.ajouter_ligne_vide()
 
-        # 20 --- CALCULATRICE
-        self.ajouter_separateur("CALCULATRICE")
-        # 21
+        self.menu.addItem("Budgets mensuels")
+        self.menu.addItem("Budgets prévisionnels")
+
+        # ---------------------------------
+        # MEME ESPACE QU'AVANT BUDGETS
+        # ---------------------------------
+
+        self.ajouter_grand_espace()
+
+        # ---------------------------------
+        # CALCULATRICES
+        # ---------------------------------
+
+        self.ajouter_separateur("CALCULATRICES")
+
         self.menu.addItem("TPS/TVQ")
-        # 22
         self.menu.addItem("Tableaux d'amortissements")
-        # 24
         self.menu.addItem("Rendements")
-        # 25
         self.menu.addItem("Devises")
         self.menu.addItem("Simulateur d'impôt")
-        # 26
-        self.ajouter_ligne_vide()
 
-        # 27 --- AUTRES
-        self.ajouter_separateur("AUTRES")
-        # 28
-        self.menu.addItem("À Propos")
+        # ---------------------------------
+        # MEME ESPACE QU'AVANT BUDGETS
+        # ---------------------------------
+
+        self.ajouter_grand_espace()
+
+        # ---------------------------------
+        # MON DOSSIER
+        # ---------------------------------
+
+        self.ajouter_separateur("MON DOSSIER")
+
+        self.menu.addItem("Assurances")
 
 
-        layout.addWidget(self.menu)
+        colonne.addSpacing(
+            LISTE_HAUT
+        )
+
+        colonne.addWidget(self.menu)
+
+
+        # =========================
+        # BOUTONS SOUS LA LISTE
+        # =========================
+
+        colonne.addSpacing(
+            16
+        )
+
+
+        self.bouton_exporter = QPushButton(
+            "Exporter les données"
+        )
+
+        self.bouton_importer = QPushButton(
+            "Importer les données"
+        )
+
+        self.bouton_nip = QPushButton(
+            "Modifier le NIP"
+        )
+
+        self.bouton_effacer = QPushButton(
+            "Effacer toutes les données"
+        )
+
+
+        for bouton in (
+            self.bouton_exporter,
+            self.bouton_importer,
+            self.bouton_nip,
+            self.bouton_effacer
+        ):
+
+            bouton.setFixedSize(
+                BOUTON_LARGEUR,
+                BOUTON_HAUTEUR
+            )
+
+            colonne.addWidget(
+                bouton,
+                0,
+                Qt.AlignHCenter
+            )
+
+
+        # =========================
+        # ESPACE PUIS BOUTON INFOS
+        # =========================
+
+        colonne.addStretch(1)
+
+
+        self.bouton_infos = QPushButton(
+            "Infos"
+        )
+
+        self.bouton_infos.setFixedSize(
+            BOUTON_LARGEUR,
+            BOUTON_HAUTEUR
+        )
+
+        self.bouton_infos.clicked.connect(
+            self.ouvrir_infos
+        )
+
+        colonne.addWidget(
+            self.bouton_infos,
+            0,
+            Qt.AlignHCenter
+        )
+
+
+        colonne.addSpacing(
+            BOUTON_BAS
+        )
+
+
+        layout.addLayout(colonne)
 
 
         # =========================
@@ -138,20 +271,21 @@ class MainWindow(QMainWindow):
         # =========================
         # CREATION DES PAGES
         # =========================
+        # Un widget par ligne du menu, dans le meme ordre :
+        # separateurs et espaces compris.
 
-        # 0 - separateur
+        # 0 - separateur ACTIFS
         self.pages.addWidget(QWidget())
         # 1
         self.pages.addWidget(EntreesPage())
         # 2
         self.pages.addWidget(SortiesPage())
-
         # 3
         self.pages.addWidget(PatrimoinePage())
-
         # 4
         self.pages.addWidget(TaxesPage())
-        # 5 - separateur
+
+        # 5 - separateur INVESTISSEMENTS
         self.pages.addWidget(QWidget())
         # 6
         self.pages.addWidget(PlacementsPage())
@@ -159,57 +293,88 @@ class MainWindow(QMainWindow):
         self.pages.addWidget(ReerCeliPage())
         # 8
         self.pages.addWidget(BoursePage())
-        # 9 - separateur
+
+        # 9 - separateur DETTES
         self.pages.addWidget(QWidget())
         # 10
         self.pages.addWidget(PretsPage())
         # 11
         self.pages.addWidget(HypothequePage())
-        # 12 - separateur
+
+        # 12 - separateur TOTAUX
         self.pages.addWidget(QWidget())
         # 13
-        self.pages.addWidget(AssurancesPage())
-        # 14 - separateur
-        self.pages.addWidget(QWidget())
-        # 15
         self.pages.addWidget(CumulatifPage())
-        # 16 - ligne vide
+
+        # 14 - grand espace
         self.pages.addWidget(QWidget())
-        # 17 - separateur
+
+        # 15 - separateur BUDGETS
         self.pages.addWidget(QWidget())
-        # 18
+        # 16
         self.pages.addWidget(BudgetMensuelPage())
-        # 19
+        # 17
         self.pages.addWidget(BudgetsPage())
-        # 20 - ligne vide
+
+        # 18 - grand espace
         self.pages.addWidget(QWidget())
-        # 21 - separateur
+
+        # 19 - separateur CALCULATRICES
         self.pages.addWidget(QWidget())
-        # 22
+        # 20
         self.pages.addWidget(TpsTvqPage())
-        # 23
+        # 21
         self.pages.addWidget(AmortissementPage())
-        # 25
+        # 22
         self.pages.addWidget(RendementPage())
-        # 26
+        # 23
         self.pages.addWidget(DevisesPage())
-        # 27
+        # 24
         self.pages.addWidget(ImpotPage())
-        # 28 - ligne vide
+
+        # 25 - grand espace
         self.pages.addWidget(QWidget())
-        # 29 - separateur
+
+        # 26 - separateur MON DOSSIER
         self.pages.addWidget(QWidget())
-        # 30
-        self.pages.addWidget(AProposPage())
+        # 27
+        self.pages.addWidget(AssurancesPage())
+
+
+        # =========================
+        # DIALOGUE INFOS
+        # =========================
+
+        self.dialogue_infos = InfosDialog(
+            self
+        )
+
+
+        # =========================
+        # BRANCHEMENT DES BOUTONS
+        # =========================
+
+        self.bouton_exporter.clicked.connect(
+            self.dialogue_infos.exporter_donnees
+        )
+
+        self.bouton_importer.clicked.connect(
+            self.dialogue_infos.importer_donnees
+        )
+
+        self.bouton_nip.clicked.connect(
+            self.dialogue_infos.ouvrir_changement_mot_passe
+        )
+
+        self.bouton_effacer.clicked.connect(
+            self.dialogue_infos.reset_application
+        )
 
 
         # =========================
         # CHANGEMENT PAGE
         # =========================
 
-        # Chaque item cliquable memorise l'index de sa page.
-        # L'association se construit en parcourant le menu et la pile
-        # dans le meme ordre : plus aucune liste d'index a maintenir.
         page_suivante = 0
 
         for ligne in range(self.menu.count()):
@@ -221,13 +386,11 @@ class MainWindow(QMainWindow):
 
             if item.flags() & Qt.ItemIsSelectable:
 
-                # Item cliquable : il consomme la page correspondante
                 item.setData(Qt.UserRole, page_suivante)
                 page_suivante += 1
 
             else:
 
-                # Separateur ou ligne vide : il consomme aussi une page
                 page_suivante += 1
 
         self.menu.currentRowChanged.connect(self.changer_page)
@@ -236,6 +399,20 @@ class MainWindow(QMainWindow):
         self.menu.setCurrentRow(1)
 
 
+
+    # =========================
+    # INFOS
+    # =========================
+
+    def ouvrir_infos(self):
+
+        self.dialogue_infos.exec()
+
+
+
+    # =========================
+    # AJOUT D'ITEMS
+    # =========================
 
     def ajouter_separateur(self, texte):
 
@@ -262,6 +439,15 @@ class MainWindow(QMainWindow):
 
 
 
+    def ajouter_grand_espace(self):
+
+        item = QListWidgetItem("")
+        item.setFlags(Qt.NoItemFlags)
+        item.setSizeHint(QSize(0, 40))
+        self.menu.addItem(item)
+
+
+
     def changer_page(self, index):
 
         if index < 0:
@@ -272,7 +458,6 @@ class MainWindow(QMainWindow):
         if item is None:
             return
 
-        # Ne rien faire si l'item n'est pas selectionnable
         if not (item.flags() & Qt.ItemIsSelectable):
             return
 

@@ -3,7 +3,7 @@ import sys
 import shutil
 
 from PySide6.QtWidgets import (
-    QWidget,
+    QDialog,
     QVBoxLayout,
     QHBoxLayout,
     QLabel,
@@ -35,11 +35,23 @@ def resource_path(
 
 
 
-class AProposPage(QWidget):
+class InfosDialog(QDialog):
 
-    def __init__(self):
+    def __init__(
+        self,
+        parent=None
+    ):
 
-        super().__init__()
+        super().__init__(parent)
+
+        self.setWindowTitle(
+            "Infos"
+        )
+
+        self.resize(
+            560,
+            560
+        )
 
 
         layout = QVBoxLayout()
@@ -76,31 +88,15 @@ class AProposPage(QWidget):
 
 
         # =========================
-        # TITRE
+        # VERSION
         # =========================
 
-        titre = QLabel(
-            "Mon bas de laine"
-        )
-
-        titre.setStyleSheet(
-            "font-size:28px;font-weight:bold;"
-        )
-
-        titre.setAlignment(
-            Qt.AlignCenter
-        )
-
-        layout.addWidget(
-            titre
-        )
-
         version = QLabel(
-            "version 1.3"
+            "version 1.41"
         )
 
         version.setStyleSheet(
-            "font-size:15px;color:#777777;"
+            "font-size:24px;font-weight:bold;"
         )
 
         version.setAlignment(
@@ -113,119 +109,105 @@ class AProposPage(QWidget):
 
 
         # =========================
-        # INFOS
+        # DESCRIPTION
         # =========================
 
-        info = QLabel(
-            """
-Projet personnel de gestion financière.
-
-Fonctions actuelles :
-
-• Entrées d'argent
-• Sorties d'argent
-• Placements (REER / CELI / Autre)
-• Prêts
-• Bourse et Crypto
-• Hypothèques
-• Assurances
-• Taxes et impôts (travail autonome)
-• Cumulatif (mise à jour v1.1)
-• Mot de passe en NIP (4 chiffres)
-• Calculatrices TVQ / TPS (mise à jour v1.3)
-• Budget mensuel
-• Tableau d'amortissement
-• Calculateur de rendement
-• Simulateur d'impôt (mise à jour v1.3)
-
-
-Développé avec Python + PySide6 + SQLite.
-            """
+        description = QLabel(
+            "Projet personnel de gestion financière."
         )
 
-        info.setStyleSheet(
+        description.setStyleSheet(
             "font-size:16px;"
         )
 
-        info.setAlignment(
+        description.setAlignment(
             Qt.AlignCenter
         )
 
         layout.addWidget(
-            info
+            description
+        )
+
+
+        layout.addSpacing(
+            16
         )
 
 
         # =========================
-        # IMPORT / EXPORT
+        # DERNIERES MISES A JOUR
         # =========================
 
-        donnees = QHBoxLayout()
-
-
-        exporter = QPushButton(
-            "Exporter les données"
+        titre_mise_a_jour = QLabel(
+            "Dernières mises à jour :"
         )
 
-        exporter.clicked.connect(
-            self.exporter_donnees
+        titre_mise_a_jour.setStyleSheet(
+            "font-size:17px;font-weight:bold;"
         )
 
-
-        importer = QPushButton(
-            "Importer des données"
+        titre_mise_a_jour.setAlignment(
+            Qt.AlignCenter
         )
 
-        importer.clicked.connect(
-            self.importer_donnees
+        layout.addWidget(
+            titre_mise_a_jour
         )
 
 
-        donnees.addWidget(
-            exporter
+        modifications = QLabel(
+            """
+• Modifications colonne des onglets
+• Modifications fenêtre Login
+• Modification du GUI
+• Modification fenêtre « Infos »
+• Ajout du Simulateur d'impôts
+• Ajout du Patrimoine
+            """
         )
 
-        donnees.addWidget(
-            importer
+        modifications.setStyleSheet(
+            "font-size:16px;"
         )
 
+        modifications.setAlignment(
+            Qt.AlignCenter
+        )
+
+        layout.addWidget(
+            modifications
+        )
+
+
+        layout.addStretch(1)
+
+
+        # =========================
+        # BOUTON FERMER
+        # =========================
+
+        boutons = QHBoxLayout()
+
+        boutons.addStretch(1)
+
+        self.bouton_fermer = QPushButton(
+            "Fermer"
+        )
+
+        self.bouton_fermer.setFixedWidth(120)
+
+        self.bouton_fermer.clicked.connect(
+            self.accept
+        )
+
+        boutons.addWidget(
+            self.bouton_fermer
+        )
+
+        boutons.addStretch(1)
 
         layout.addLayout(
-            donnees
-        )
-
-
-        # =========================
-        # MOT DE PASSE
-        # =========================
-
-        mot_de_passe = QPushButton(
-            "Modifier le NIP"
-        )
-
-        mot_de_passe.clicked.connect(
-            self.ouvrir_changement_mot_passe
-        )
-
-        layout.addWidget(
-            mot_de_passe
-        )
-
-
-        # =========================
-        # RESET
-        # =========================
-
-        reset = QPushButton(
-            "Effacer toutes les données"
-        )
-
-        reset.clicked.connect(
-            self.reset_application
-        )
-
-        layout.addWidget(
-            reset
+            boutons
         )
 
 
@@ -234,6 +216,10 @@ Développé avec Python + PySide6 + SQLite.
         )
 
 
+
+    # =========================
+    # EXPORT
+    # =========================
 
     def exporter_donnees(
         self
@@ -276,6 +262,10 @@ Développé avec Python + PySide6 + SQLite.
             )
 
 
+
+    # =========================
+    # IMPORT
+    # =========================
 
     def importer_donnees(
         self
@@ -350,6 +340,10 @@ Voulez-vous continuer ?
 
 
 
+    # =========================
+    # NIP
+    # =========================
+
     def ouvrir_changement_mot_passe(
         self
     ):
@@ -362,6 +356,10 @@ Voulez-vous continuer ?
 
 
 
+    # =========================
+    # RESET
+    # =========================
+
     def reset_application(
         self
     ):
@@ -372,22 +370,30 @@ Voulez-vous continuer ?
             """
 ATTENTION !
 
-Cette action va supprimer toutes les données de l'application.
+Cette action va supprimer TOUTES les données de l'application.
 
 - Entrées
 - Sorties
-- Placements
-- REER / CELI
+- Placements (REER / CELI / Autre)
+- Historique des placements
 - Prêts
 - Bourse et Crypto
 - Hypothèques
-- Assurances
-- Taxes et impôts
-- Budget mensuel
+- Assurances et couvertures
+- Taxes et impôts (travail autonome)
+- Patrimoine
+- Cumulatif (tous les résumés)
+- Budgets mensuels
+- Budgets prévisionnels
 - Tableaux d'amortissement
 - Calculs de rendement
+- Simulateur d'impôt
+- Plafonds REER / CELI
+- Acomptes provisionnels
 
-Le NIP sera réinitialisé à 1234.
+Le NIP sera réinitialisé à 1234 et les indices seront effacés.
+
+La copie de sécurité (.backup) est conservée.
 
 Voulez-vous continuer ?
             """,
@@ -405,5 +411,5 @@ Voulez-vous continuer ?
                 "Effacement terminé",
                 "Toutes les données ont été effacées.\n\n"
                 "Le NIP a été réinitialisé à 1234.\n\n"
-                "Veuillez aller dans « À Propos » pour configurer un nouveau NIP."
+                "Veuillez aller dans « Infos » pour configurer un nouveau NIP."
             )

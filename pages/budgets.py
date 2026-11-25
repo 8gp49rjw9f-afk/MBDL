@@ -34,7 +34,7 @@ class BudgetsPage(QWidget):
 
         layout = QVBoxLayout()
 
-        titre = QLabel("Budgets")
+        titre = QLabel("Budgets prévisionnels")
         titre.setStyleSheet("font-size:28px;font-weight:bold;")
         layout.addWidget(titre)
 

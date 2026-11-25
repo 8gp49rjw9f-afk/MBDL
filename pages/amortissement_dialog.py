@@ -185,6 +185,13 @@ class AmortissementDialog(QDialog):
             "Sauvegarder"
         )
 
+        sauvegarder.setDefault(
+            True
+        )
+
+        sauvegarder.setAutoDefault(
+            True
+        )
 
         boutons.addWidget(
             annuler

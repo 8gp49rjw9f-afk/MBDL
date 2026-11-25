@@ -118,6 +118,13 @@ class ReerCeliDialog(QDialog):
             "Sauvegarder"
         )
 
+        sauvegarder.setDefault(
+            True
+        )
+
+        sauvegarder.setAutoDefault(
+            True
+        )
 
         boutons.addWidget(
             annuler
@@ -263,6 +270,13 @@ class ReerCeliEditDialog(QDialog):
             "Sauvegarder"
         )
 
+        sauvegarder.setDefault(
+            True
+        )
+
+        sauvegarder.setAutoDefault(
+            True
+        )
 
         boutons.addWidget(
             annuler

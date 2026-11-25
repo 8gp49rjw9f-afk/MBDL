@@ -8,10 +8,14 @@ from PySide6.QtWidgets import (
     QMessageBox
 )
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QIntValidator
 
 from database import get_connection, reset_database
+
+
+# Duree de l'affichage vert ou rouge, en millisecondes
+DUREE_COULEUR = 500
 
 
 class CaseChiffre(QLineEdit):
@@ -29,20 +33,48 @@ class CaseChiffre(QLineEdit):
         self.setValidator(QIntValidator(0, 9, self))
         self.setEchoMode(QLineEdit.Password)
 
+        self.appliquer_contour(
+            "normal"
+        )
+
+
+
+    # =========================
+    # CONTOUR SELON L'ETAT
+    # =========================
+
+    def appliquer_contour(
+        self,
+        etat
+    ):
+
+        if etat == "bon":
+
+            bordure = "#1b7f2e"
+
+        elif etat == "mauvais":
+
+            bordure = "#c02020"
+
+        else:
+
+            bordure = "#999999"
+
         self.setStyleSheet(
-            """
-            QLineEdit {
+            f"""
+            QLineEdit {{
                 font-size: 28px;
                 font-weight: bold;
-                border: 2px solid #999999;
+                border: 2px solid {bordure};
                 border-radius: 6px;
                 background-color: #ffffff;
-            }
-            QLineEdit:focus {
-                border: 2px solid #2d7ff9;
-            }
+            }}
+            QLineEdit:focus {{
+                border: 2px solid {bordure};
+            }}
             """
         )
+
 
 
 class LoginWindow(QWidget):
@@ -264,6 +296,32 @@ class LoginWindow(QWidget):
 
 
     # =========================
+    # COULEUR DES CASES
+    # =========================
+
+    def colorer_cases(
+        self,
+        etat
+    ):
+
+        for case in self.cases:
+
+            case.appliquer_contour(
+                etat
+            )
+
+
+    def remettre_cases_normales(
+        self
+    ):
+
+        self.colorer_cases(
+            "normal"
+        )
+
+
+
+    # =========================
     # VERIFICATION
     # =========================
 
@@ -307,23 +365,61 @@ class LoginWindow(QWidget):
 
         if pin == pin_actuel:
 
-            self.close()
+            # Contour vert, puis ouverture de l'application
+            self.colorer_cases(
+                "bon"
+            )
 
-            self.on_success()
+            QTimer.singleShot(
+                DUREE_COULEUR,
+                self.ouvrir_application
+            )
 
         else:
 
-            QMessageBox.warning(
-                self,
-                "Erreur",
-                "Mauvais NIP"
+            # Contour rouge, puis effacement du NIP
+            self.colorer_cases(
+                "mauvais"
             )
 
-            for case in self.cases:
+            QTimer.singleShot(
+                DUREE_COULEUR,
+                self.echec_connexion
+            )
 
-                case.clear()
 
-            self.cases[0].setFocus()
+
+    # =========================
+    # SUITE DU SUCCES
+    # =========================
+
+    def ouvrir_application(self):
+
+        self.close()
+
+        self.on_success()
+
+
+
+    # =========================
+    # SUITE DE L'ECHEC
+    # =========================
+
+    def echec_connexion(self):
+
+        for case in self.cases:
+
+            case.clear()
+
+        self.remettre_cases_normales()
+
+        self.cases[0].setFocus()
+
+        QMessageBox.warning(
+            self,
+            "Erreur",
+            "Mauvais NIP"
+        )
 
 
 
@@ -388,7 +484,7 @@ Cette action va effacer TOUTES les données de l'application.
 
 Le NIP sera réinitialisé à 1234.
 
-Vous devrez aller dans « À Propos » pour configurer un nouveau NIP.
+Vous devrez aller dans « Infos » pour configurer un nouveau NIP.
 
 Voulez-vous continuer ?
             """,
@@ -406,11 +502,13 @@ Voulez-vous continuer ?
             "Nouveau projet créé",
             "Toutes les données ont été effacées.\n\n"
             "Le NIP par défaut est 1234.\n\n"
-            "Allez dans « À Propos » pour configurer votre NIP."
+            "Allez dans « Infos » pour configurer votre NIP."
         )
 
         for case in self.cases:
 
             case.clear()
+
+        self.remettre_cases_normales()
 
         self.cases[0].setFocus()

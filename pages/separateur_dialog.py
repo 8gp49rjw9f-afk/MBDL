@@ -84,6 +84,14 @@ class SeparateurDialog(QDialog):
         )
 
 
+        sauvegarder.setDefault(
+            True
+        )
+
+        sauvegarder.setAutoDefault(
+            True
+        )
+
         boutons.addWidget(
             annuler
         )

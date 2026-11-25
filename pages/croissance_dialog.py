@@ -306,6 +306,13 @@ class RendementDialog(QDialog):
             "Sauvegarder"
         )
 
+        sauvegarder.setDefault(
+            True
+        )
+
+        sauvegarder.setAutoDefault(
+            True
+        )
 
         boutons.addWidget(
             annuler
@@ -515,6 +522,13 @@ class RetraiteDialog(QDialog):
             "Sauvegarder"
         )
 
+        sauvegarder.setDefault(
+            True
+        )
+
+        sauvegarder.setAutoDefault(
+            True
+        )
 
         boutons.addWidget(
             annuler

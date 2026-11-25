@@ -40,7 +40,7 @@ class BudgetMensuelPage(QWidget):
         # =========================
 
         titre = QLabel(
-            "Budget mensuel"
+            "Budgets mensuels"
         )
 
         titre.setStyleSheet(
@@ -977,13 +977,9 @@ class BudgetMensuelPage(QWidget):
                 """
                 UPDATE budget_mensuel
 
-                SET
-
-                type_ligne = ?,
-
-                nom = ?,
-
-                montant = ?
+                SET type_ligne = ?,
+                    nom = ?,
+                    montant = ?
 
                 WHERE id = ?
                 """,
@@ -1028,7 +1024,6 @@ class BudgetMensuelPage(QWidget):
 
         if confirmation == QMessageBox.Yes:
 
-
             conn = get_connection()
 
             cursor = conn.cursor()
@@ -1052,7 +1047,6 @@ class BudgetMensuelPage(QWidget):
 
 
             self.reorganiser_positions()
-
 
             self.charger()
 

@@ -8,8 +8,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QCheckBox,
     QMessageBox,
-    QFrame,
-    QApplication
+    QFrame
 )
 
 from PySide6.QtCore import Qt
@@ -17,6 +16,10 @@ from PySide6.QtGui import QFont
 
 from pages import impot_donnees
 from pages import impot_parametres
+from pages.deductions_dialog import (
+    DeductionsDialog,
+    total_deductions
+)
 
 
 class ImpotPage(QWidget):
@@ -143,6 +146,48 @@ class ImpotPage(QWidget):
 
             self.champs[cle] = champ
 
+        # =========================
+        # LIGNE DES DEDUCTIONS
+        # =========================
+
+        ligne_deductions = QHBoxLayout()
+
+        etiquette_ded = QLabel("Autres déductions")
+
+        etiquette_ded.setMinimumWidth(230)
+
+        ligne_deductions.addWidget(etiquette_ded)
+
+        self.bouton_deductions = QPushButton("Voir")
+
+        self.bouton_deductions.setFixedWidth(70)
+
+        self.bouton_deductions.setCursor(Qt.PointingHandCursor)
+
+        self.bouton_deductions.clicked.connect(
+            self.ouvrir_deductions
+        )
+
+        ligne_deductions.addWidget(self.bouton_deductions)
+
+        self.label_deductions = QLabel("0,00 $")
+
+        self.label_deductions.setMinimumWidth(100)
+
+        self.label_deductions.setAlignment(Qt.AlignRight)
+
+        self.label_deductions.setStyleSheet(
+            "color:#555555;"
+        )
+
+        ligne_deductions.addWidget(self.label_deductions)
+
+        ligne_deductions.addStretch()
+
+        colonne.addLayout(ligne_deductions)
+
+        colonne.addSpacing(6)
+
         self.case_rrq = QCheckBox(
             "Cotiser au RRQ et au RQAP (travailleur autonome)"
         )
@@ -218,6 +263,8 @@ class ImpotPage(QWidget):
         for cle, libelle, gras in [
 
             ("revenu_total", "Revenu total", True),
+            ("deductions", "Autres déductions", False),
+            ("revenu_imposable", "Revenu imposable", False),
             ("impot_federal", "Impôt fédéral", False),
             ("impot_provincial", "Impôt provincial", False),
             ("cotisations", "Cotisations au RRQ et à l'AE", False),
@@ -241,7 +288,8 @@ class ImpotPage(QWidget):
         for cle, libelle in [
 
             ("taux_moyen", "Taux d'imposition moyen"),
-            ("taux_marginal", "Taux d'imposition marginal")
+            ("marginal_federal", "Taux marginal fédéral"),
+            ("marginal_quebec", "Taux marginal Québec")
 
         ]:
 
@@ -421,9 +469,6 @@ class ImpotPage(QWidget):
 
 
         # --- Tableau : deux blocs separes par une ligne verticale ---
-        #   col 0-1 : Federal (tranche + taux)
-        #   col 2   : ligne verticale
-        #   col 3-4 : Quebec (tranche + taux)
 
         self.zone_paliers = QVBoxLayout()
 
@@ -609,6 +654,44 @@ class ImpotPage(QWidget):
 
             return "0,00 $"
 
+
+    def formater_taux(self, valeur):
+
+        try:
+
+            texte = (
+                f"{float(valeur):,.2f}"
+                .replace(",", " ")
+                .replace(".", ",")
+            )
+
+            return texte + " %"
+
+        except Exception:
+
+            return "0,00 %"
+
+    # =========================
+    # DEDUCTIONS
+    # =========================
+
+    def ouvrir_deductions(self):
+
+        dialog = DeductionsDialog(self)
+
+        dialog.exec()
+
+        self.afficher_deductions()
+
+        self.calculer()
+
+
+    def afficher_deductions(self):
+
+        self.label_deductions.setText(
+            self.formater(total_deductions())
+        )
+
     # =========================
     # CALCUL
     # =========================
@@ -631,6 +714,8 @@ class ImpotPage(QWidget):
             self.champs["impot_paye_qc"].text()
         )
 
+        deductions = total_deductions()
+
         gains_imposables = gains * 0.5
 
         revenu_total = emploi + autonome + autres + gains_imposables
@@ -640,7 +725,7 @@ class ImpotPage(QWidget):
         resultat = impot_donnees.calculer(
             revenu_imposable,
             autonome=self.case_rrq.isChecked(),
-            autres_deductions=0.0,
+            autres_deductions=deductions,
             donnees=self.donnees
         )
 
@@ -664,25 +749,21 @@ class ImpotPage(QWidget):
         if reste > 0.005:
 
             self.montant_estime.setStyleSheet(
-                "font-size:42px;font-weight:bold;color:#1e7a3c;"
+                "font-size:42px;font-weight:bold;color:#1b7f2e;"
             )
 
             self.legende_montant.setText(
-                "Déjà payé, moins impôt et cotisations"
-                if cotisations > 0
-                else "Déjà payé, moins impôt"
+                "Remboursement estimé"
             )
 
         elif reste < -0.005:
 
             self.montant_estime.setStyleSheet(
-                "font-size:42px;font-weight:bold;color:#b3261e;"
+                "font-size:42px;font-weight:bold;color:#c02020;"
             )
 
             self.legende_montant.setText(
-                "Impôt et cotisations, moins déjà payé"
-                if cotisations > 0
-                else "Impôt, moins déjà payé"
+                "Solde à payer estimé"
             )
 
         else:
@@ -691,12 +772,22 @@ class ImpotPage(QWidget):
                 "font-size:42px;font-weight:bold;color:#333333;"
             )
 
-            self.legende_montant.setText("Aucun solde")
+            self.legende_montant.setText(
+                "Équilibre"
+            )
 
         # --- Résultats ---
 
         self.resultats["revenu_total"].setText(
             self.formater(revenu_total)
+        )
+
+        self.resultats["deductions"].setText(
+            self.formater(deductions)
+        )
+
+        self.resultats["revenu_imposable"].setText(
+            self.formater(resultat["revenu_imposable"])
         )
 
         self.resultats["impot_federal"].setText(
@@ -719,79 +810,76 @@ class ImpotPage(QWidget):
             self.formater(revenu_net)
         )
 
-        taux_moyen = (
-            impot_total / revenu_total * 100.0
-            if revenu_total > 0 else 0.0
-        )
+        # --- Taux ---
 
         self.taux_ligne["taux_moyen"].setText(
-            f"{taux_moyen:.2f} %".replace(".", ",")
+            self.formater_taux(resultat["taux_moyen"])
         )
 
-        self.taux_ligne["taux_marginal"].setText(
-            f"{resultat['taux_marginal_combine']:.2f} %".replace(".", ",")
+        self.taux_ligne["marginal_federal"].setText(
+            self.formater_taux(resultat["taux_marginal_federal"])
+        )
+
+        self.taux_ligne["marginal_quebec"].setText(
+            self.formater_taux(resultat["taux_marginal_quebec"])
         )
 
     # =========================
     # SAUVEGARDE DES CHAMPS
     # =========================
 
-    def sauvegarder_champs(self, *args):
+    def sauvegarder_champs(self):
 
-        """
-        Enregistre le contenu des champs a chaque modification.
-        L'action est legere : le fichier ne contient que du texte.
-        """
+        champs = {}
 
-        try:
+        for cle, champ in self.champs.items():
 
-            champs = {}
+            champs[cle] = champ.text()
 
-            for cle, champ in self.champs.items():
+        impot_parametres.sauvegarder(
+            champs,
+            self.case_rrq.isChecked()
+        )
 
-                champs[cle] = champ.text()
 
-            impot_parametres.sauvegarder(
-                champs,
-                self.case_rrq.isChecked()
-            )
-
-        except Exception:
-
-            pass
 
     def charger_champs(self):
 
-        """
-        Reaffiche les valeurs enregistrees a l'ouverture.
-        """
+        champs, case_rrq = impot_parametres.charger()
 
-        try:
+        for cle, champ in self.champs.items():
 
-            champs, case = impot_parametres.charger()
+            if cle in champs:
 
-        except Exception:
+                champ.blockSignals(True)
 
-            return
+                champ.setText(
+                    str(champs[cle])
+                )
 
-        for cle, valeur in champs.items():
+                champ.blockSignals(False)
 
-            if cle in self.champs:
+        self.case_rrq.blockSignals(True)
 
-                self.champs[cle].setText(valeur)
+        self.case_rrq.setChecked(case_rrq)
 
-        self.case_rrq.setChecked(bool(case))
+        self.case_rrq.blockSignals(False)
+
+        self.afficher_deductions()
+
+    # =========================
+    # EFFACER
+    # =========================
 
     def effacer_tout(self):
 
-        reponse = QMessageBox.question(
+        confirmation = QMessageBox.question(
             self,
-            "Effacer les informations",
-            "Effacer tous les montants entrés et les remettre à zéro ?",
-            QMessageBox.Yes | QMessageBox.No
+            "Effacer",
+            "Effacer toutes les informations du simulateur ?"
         )
 
-        if reponse != QMessageBox.Yes:
+        if confirmation != QMessageBox.Yes:
 
             return
 
@@ -814,37 +902,47 @@ class ImpotPage(QWidget):
         self.calculer()
 
     # =========================
-    # MISE À JOUR
+    # MISE A JOUR DES PALIERS
     # =========================
 
-    def mettre_a_jour(self, annee_cible):
+    def mettre_a_jour(self, annee):
 
-        annee_cible = int(annee_cible)
+        if impot_donnees.est_telechargee(annee):
 
-        succes, message, donnees = impot_donnees.telecharger(annee_cible)
+            confirmation = QMessageBox.question(
+                self,
+                "Paliers déjà téléchargés",
+                f"Les paliers {annee} sont déjà enregistrés.\n\n"
+                "Voulez-vous les télécharger de nouveau ?"
+            )
 
-        if succes and impot_donnees.donnees_valides(donnees):
+            if confirmation != QMessageBox.Yes:
+
+                return
+
+        succes, message, donnees = impot_donnees.telecharger(annee)
+
+        if succes:
+
+            self.donnees = donnees
 
             impot_donnees.sauvegarder(donnees)
 
-            texte = f"Les paliers {annee_cible} ont été téléchargés et sont maintenant utilisés."
+            self.afficher_paliers()
 
-        else:
+            self.calculer()
 
-            donnees = impot_donnees.donnees_par_defaut(annee_cible)
-
-            raison = message or "Le téléchargement a échoué."
-
-            texte = (
-                f"{raison}\n\n"
-                f"Les paliers {annee_cible} intégrés au programme "
-                "sont maintenant utilisés."
+            QMessageBox.information(
+                self,
+                "Paliers mis à jour",
+                f"Les paliers d'imposition {annee} ont été enregistrés."
             )
 
-        self.donnees = donnees
+            return
 
-        self.afficher_paliers()
-
-        self.calculer()
-
-        QMessageBox.information(self, f"Paliers {annee_cible}", texte)
+        QMessageBox.warning(
+            self,
+            "Téléchargement impossible",
+            message + "\n\n"
+            "Les valeurs intégrées au programme sont utilisées."
+        )

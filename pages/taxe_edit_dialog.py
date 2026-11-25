@@ -249,6 +249,13 @@ class TaxeEditDialog(QDialog):
             "Sauvegarder"
         )
 
+        sauvegarder.setDefault(
+            True
+        )
+
+        sauvegarder.setAutoDefault(
+            True
+        )
 
         boutons.addWidget(
             annuler

@@ -37,6 +37,29 @@ DEVISES = [
     ("Norvège", "Couronne", "NOK", "kr"),
     ("Suède", "Couronne", "SEK", "kr"),
     ("Danemark", "Couronne", "DKK", "kr"),
+    ("Nouvelle-Zélande", "Dollar Néo-Zélandais", "NZD", "$"),
+    ("Singapour", "Dollar de Singapour", "SGD", "$"),
+    ("Hong Kong", "Dollar de Hong Kong", "HKD", "$"),
+    ("Corée du Sud", "Won", "KRW", "₩"),
+    ("Taïwan", "Dollar Taïwanais", "TWD", "$"),
+    ("Thaïlande", "Baht", "THB", "฿"),
+    ("Malaisie", "Ringgit", "MYR", "RM"),
+    ("Indonésie", "Roupie Indonésienne", "IDR", "Rp"),
+    ("Philippines", "Peso Philippin", "PHP", "₱"),
+    ("Vietnam", "Dong", "VND", "₫"),
+    ("Pologne", "Zloty", "PLN", "zł"),
+    ("Tchéquie", "Couronne Tchèque", "CZK", "Kč"),
+    ("Hongrie", "Forint", "HUF", "Ft"),
+    ("Roumanie", "Leu", "RON", "lei"),
+    ("Turquie", "Livre Turque", "TRY", "₺"),
+    ("Russie", "Rouble", "RUB", "₽"),
+    ("Afrique du Sud", "Rand", "ZAR", "R"),
+    ("Israël", "Shekel", "ILS", "₪"),
+    ("Émirats Arabes Unis", "Dirham", "AED", "د.إ"),
+    ("Arabie Saoudite", "Riyal", "SAR", "﷼"),
+    ("Argentine", "Peso Argentin", "ARS", "$"),
+    ("Chili", "Peso Chilien", "CLP", "$"),
+    ("Colombie", "Peso Colombien", "COP", "$"),
 ]
 
 
@@ -63,6 +86,29 @@ class DevisesPage(QWidget):
             "NOK": 6.80,
             "SEK": 6.90,
             "DKK": 5.00,
+            "NZD": 1.19,
+            "SGD": 0.98,
+            "HKD": 5.70,
+            "KRW": 960.00,
+            "TWD": 22.90,
+            "THB": 26.50,
+            "MYR": 3.30,
+            "IDR": 11500.00,
+            "PHP": 41.00,
+            "VND": 18500.00,
+            "PLN": 2.90,
+            "CZK": 16.50,
+            "HUF": 265.00,
+            "RON": 3.30,
+            "TRY": 23.00,
+            "RUB": 68.00,
+            "ZAR": 13.50,
+            "ILS": 2.70,
+            "AED": 2.70,
+            "SAR": 2.75,
+            "ARS": 620.00,
+            "CLP": 690.00,
+            "COP": 2950.00,
         }
 
         layout = QVBoxLayout()
@@ -188,8 +234,6 @@ class DevisesPage(QWidget):
             taux_devise = self.taux.get(code, 1.0)
 
             # Convertir: montant_source -> source -> CAD -> devise cible
-            # montant_cad = montant_source / taux_source
-            # montant_cible = montant_cad * taux_devise
             if taux_source > 0:
                 montant_cad = montant_source / taux_source
             else:
@@ -217,7 +261,7 @@ class DevisesPage(QWidget):
 
         try:
 
-            url = f"https://open.er-api.com/v6/latest/{code_source}"
+            url = f"[open.er-api.com](https://open.er-api.com/v6/latest/{code_source})"
 
             req = urllib.request.Request(url, headers={"User-Agent": "MBDL/1.0"})
 
@@ -239,18 +283,31 @@ class DevisesPage(QWidget):
 
             rates = data.get("rates", {})
 
+            manquants = []
+
             for code in self.taux:
                 if code in rates:
                     self.taux[code] = rates[code]
+                else:
+                    manquants.append(code)
 
 
             self.recalculer()
 
 
+            message = "Les taux de change ont été mis à jour avec succès."
+
+            if manquants:
+                message += (
+                    "\n\nCodes sans taux reçu : "
+                    + ", ".join(manquants)
+                )
+
+
             QMessageBox.information(
                 self,
                 "Mise à jour",
-                "Les taux de change ont été mis à jour avec succès."
+                message
             )
 
 

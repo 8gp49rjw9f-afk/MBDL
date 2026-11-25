@@ -14,7 +14,7 @@ from PySide6.QtGui import QIntValidator
 from database import get_connection
 
 
-class CasePin(QLineEdit):
+class CaseChiffre(QLineEdit):
 
     def __init__(
         self,
@@ -85,15 +85,11 @@ class ChangerMotDePasseDialog(QDialog):
 
         layout.addWidget(QLabel("NIP actuel"))
 
-        self.actuel = QLineEdit()
+        self.cases_actuel = self.creer_cases()
 
-        self.actuel.setPlaceholderText("1234")
-        self.actuel.setMaxLength(4)
-        self.actuel.setEchoMode(QLineEdit.Password)
-        self.actuel.setValidator(QIntValidator(0, 9, self))
-        self.actuel.setFixedWidth(120)
-
-        layout.addWidget(self.actuel)
+        layout.addLayout(
+            self.rangee_cases(self.cases_actuel)
+        )
 
 
         # =========================
@@ -102,15 +98,11 @@ class ChangerMotDePasseDialog(QDialog):
 
         layout.addWidget(QLabel("Nouveau NIP"))
 
-        self.nouveau = QLineEdit()
+        self.cases_nouveau = self.creer_cases()
 
-        self.nouveau.setPlaceholderText("4 chiffres")
-        self.nouveau.setMaxLength(4)
-        self.nouveau.setEchoMode(QLineEdit.Password)
-        self.nouveau.setValidator(QIntValidator(0, 9, self))
-        self.nouveau.setFixedWidth(120)
-
-        layout.addWidget(self.nouveau)
+        layout.addLayout(
+            self.rangee_cases(self.cases_nouveau)
+        )
 
 
         # =========================
@@ -119,15 +111,11 @@ class ChangerMotDePasseDialog(QDialog):
 
         layout.addWidget(QLabel("Confirmer le nouveau NIP"))
 
-        self.confirmation = QLineEdit()
+        self.cases_confirmation = self.creer_cases()
 
-        self.confirmation.setPlaceholderText("4 chiffres")
-        self.confirmation.setMaxLength(4)
-        self.confirmation.setEchoMode(QLineEdit.Password)
-        self.confirmation.setValidator(QIntValidator(0, 9, self))
-        self.confirmation.setFixedWidth(120)
-
-        layout.addWidget(self.confirmation)
+        layout.addLayout(
+            self.rangee_cases(self.cases_confirmation)
+        )
 
 
         # =========================
@@ -201,11 +189,163 @@ class ChangerMotDePasseDialog(QDialog):
 
         self.setLayout(layout)
 
+        self.cases_actuel[0].setFocus()
+
+
+    # =========================
+    # FABRICATION DES CASES
+    # =========================
+
+    def creer_cases(
+        self
+    ):
+
+        cases = []
+
+        for index in range(4):
+
+            case = CaseChiffre()
+
+            case.textChanged.connect(
+                lambda texte, i=index, groupe=cases:
+                self.case_remplie(groupe, i, texte)
+            )
+
+            case.returnPressed.connect(
+                self.confirmer_changement
+            )
+
+            cases.append(case)
+
+        return cases
+
+
+    def rangee_cases(
+        self,
+        cases
+    ):
+
+        rangee = QHBoxLayout()
+
+        rangee.setSpacing(8)
+
+        for case in cases:
+
+            rangee.addWidget(case)
+
+        rangee.addStretch()
+
+        return rangee
+
+
+    # =========================
+    # NAVIGATION ENTRE LES CASES
+    # =========================
+
+    def case_remplie(
+        self,
+        cases,
+        index,
+        texte
+    ):
+
+        if len(texte) > 1:
+
+            # Collage : on repartit les chiffres
+            chiffres = "".join(
+                caractere
+                for caractere in texte
+                if caractere.isdigit()
+            )[:4]
+
+            for position, chiffre in enumerate(chiffres):
+
+                cases[position].setText(chiffre)
+
+            self.aller_a(cases, len(chiffres))
+
+            return
+
+        if texte and index < 3:
+
+            cases[index + 1].setFocus()
+
+            cases[index + 1].selectAll()
+
+
+    def aller_a(
+        self,
+        cases,
+        position
+    ):
+
+        if position > 3:
+
+            position = 3
+
+        cases[position].setFocus()
+
+        cases[position].selectAll()
+
+
+    # =========================
+    # LECTURE D'UN NIP
+    # =========================
+
+    def lire_cases(
+        self,
+        cases
+    ):
+
+        return "".join(
+            case.text()
+            for case in cases
+        )
+
+
+    def vider_cases(
+        self,
+        cases
+    ):
+
+        for case in cases:
+
+            case.clear()
+
+
+    # =========================
+    # CONFIRMATION
+    # =========================
 
     def confirmer_changement(self):
 
-        nouveau = self.nouveau.text().strip()
-        confirmation = self.confirmation.text().strip()
+        actuel = self.lire_cases(self.cases_actuel)
+        nouveau = self.lire_cases(self.cases_nouveau)
+        confirmation = self.lire_cases(self.cases_confirmation)
+
+        if len(actuel) != 4 or len(nouveau) != 4:
+
+            QMessageBox.warning(
+                self,
+                "Erreur",
+                "Le NIP doit contenir exactement 4 chiffres."
+            )
+
+            return
+
+        if nouveau != confirmation:
+
+            QMessageBox.warning(
+                self,
+                "Erreur",
+                "La confirmation ne correspond pas au nouveau NIP."
+            )
+
+            self.vider_cases(self.cases_confirmation)
+
+            self.cases_confirmation[0].setFocus()
+
+            return
 
         conn = get_connection()
         cursor = conn.cursor()
@@ -228,7 +368,7 @@ class ChangerMotDePasseDialog(QDialog):
             else "1234"
         )
 
-        if self.actuel.text().strip() != nip_actuel:
+        if actuel != nip_actuel:
 
             conn.close()
 
@@ -238,29 +378,9 @@ class ChangerMotDePasseDialog(QDialog):
                 "NIP actuel incorrect."
             )
 
-            return
+            self.vider_cases(self.cases_actuel)
 
-        if len(nouveau) != 4 or not nouveau.isdigit():
-
-            conn.close()
-
-            QMessageBox.warning(
-                self,
-                "Erreur",
-                "Le nouveau NIP doit contenir exactement 4 chiffres."
-            )
-
-            return
-
-        if nouveau != confirmation:
-
-            conn.close()
-
-            QMessageBox.warning(
-                self,
-                "Erreur",
-                "La confirmation ne correspond pas au nouveau NIP."
-            )
+            self.cases_actuel[0].setFocus()
 
             return
 

@@ -32,13 +32,11 @@ DATABASE_NAME = os.path.join(
 )
 
 
-
 def get_connection():
 
     return sqlite3.connect(
         DATABASE_NAME
     )
-
 
 
 def create_database():
@@ -798,6 +796,28 @@ def create_database():
 
 
     # =========================
+    # DEDUCTIONS D'IMPOT
+    # =========================
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS deductions_impot (
+
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            nom TEXT,
+
+            montant REAL NOT NULL DEFAULT 0,
+
+            position INTEGER NOT NULL DEFAULT 0
+
+        )
+        """
+    )
+
+
+
+    # =========================
     # AJOUT DE COLONNES SI BASE EXISTANTE
     # =========================
 
@@ -860,7 +880,7 @@ def create_database():
         (
             "bourse",
             "symbole",
-            "TEXT DEFAULT ''"
+            "TEXT"
         ),
 
         (
@@ -871,8 +891,8 @@ def create_database():
 
         (
             "assurances",
-            "prime",
-            "REAL NOT NULL DEFAULT 0"
+            "type_assurance",
+            "TEXT"
         ),
 
         (
@@ -882,121 +902,13 @@ def create_database():
         ),
 
         (
-            "cumulatifs",
-            "entrees",
-            "INTEGER NOT NULL DEFAULT 0"
-        ),
-
-        (
-            "cumulatifs",
-            "sorties",
-            "INTEGER NOT NULL DEFAULT 0"
-        ),
-
-        (
-            "cumulatifs",
-            "taxes_provinciales",
-            "INTEGER NOT NULL DEFAULT 0"
-        ),
-
-        (
-            "cumulatifs",
-            "taxes_federales",
-            "INTEGER NOT NULL DEFAULT 0"
-        ),
-
-        (
-            "cumulatifs",
-            "impots",
-            "INTEGER NOT NULL DEFAULT 0"
-        ),
-
-        (
-            "cumulatifs",
-            "prets",
-            "INTEGER NOT NULL DEFAULT 0"
-        ),
-
-        (
-            "cumulatifs",
-            "hypotheques",
-            "INTEGER NOT NULL DEFAULT 0"
-        ),
-
-        (
-            "cumulatifs",
-            "placements",
-            "INTEGER NOT NULL DEFAULT 0"
-        ),
-
-        (
-            "cumulatifs",
-            "reer",
-            "INTEGER NOT NULL DEFAULT 0"
-        ),
-
-        (
-            "cumulatifs",
-            "celi",
-            "INTEGER NOT NULL DEFAULT 0"
-        ),
-
-        (
-            "cumulatifs",
-            "patrimoine",
-            "INTEGER NOT NULL DEFAULT 0"
-        ),
-
-        (
-            "cumulatifs",
-            "position",
-            "INTEGER NOT NULL DEFAULT 0"
+            "budget_lignes",
+            "autres_infos",
+            "TEXT"
         ),
 
         (
             "patrimoine",
-            "est_separateur",
-            "INTEGER NOT NULL DEFAULT 0"
-        ),
-
-        (
-            "couvertures",
-            "nom",
-            "TEXT DEFAULT ''"
-        ),
-
-        (
-            "couvertures",
-            "type_montant",
-            "TEXT DEFAULT 'Prix ($)'"
-        ),
-
-        (
-            "users",
-            "indice1",
-            "TEXT DEFAULT ''"
-        ),
-
-        (
-            "users",
-            "indice2",
-            "TEXT DEFAULT ''"
-        ),
-
-        (
-            "bourse",
-            "nombre_actions",
-            "REAL NOT NULL DEFAULT 0"
-        ),
-
-        (
-            "bourse",
-            "prix_actuel",
-            "REAL NOT NULL DEFAULT 0"
-        ),
-
-        (
-            "reer_celi",
             "est_separateur",
             "INTEGER NOT NULL DEFAULT 0"
         ),
@@ -1014,9 +926,21 @@ def create_database():
         ),
 
         (
+            "amortissements",
+            "paiement_additionnel",
+            "REAL NOT NULL DEFAULT 0"
+        ),
+
+        (
             "rendements",
             "est_separateur",
             "INTEGER NOT NULL DEFAULT 0"
+        ),
+
+        (
+            "rendements",
+            "cotisation_mensuelle",
+            "REAL NOT NULL DEFAULT 0"
         ),
 
         (
@@ -1026,74 +950,31 @@ def create_database():
         ),
 
         (
-            "travail_autonome",
-            "sans_tps",
-            "INTEGER NOT NULL DEFAULT 0"
+            "users",
+            "indice1",
+            "TEXT"
         ),
 
         (
-            "travail_autonome",
-            "sans_tvq",
-            "INTEGER NOT NULL DEFAULT 0"
-        ),
-
-        (
-            "travail_autonome",
-            "pourcentage_impot",
-            "REAL NOT NULL DEFAULT 33"
+            "users",
+            "indice2",
+            "TEXT"
         )
 
     ]
 
 
-    for table, colonne, type_sql in colonnes_a_ajouter:
+    for table, colonne, definition in colonnes_a_ajouter:
 
         try:
 
             cursor.execute(
-                f"ALTER TABLE {table} ADD COLUMN {colonne} {type_sql}"
+                f"ALTER TABLE {table} ADD COLUMN {colonne} {definition}"
             )
 
         except sqlite3.OperationalError:
 
             pass
-
-
-
-    # =========================
-    # MIGRATION BOURSE (nombre d'actions)
-    # =========================
-
-    try:
-
-        cursor.execute(
-            """
-            UPDATE bourse
-
-            SET nombre_actions = 1
-
-            WHERE est_separateur = 0
-
-            AND (nombre_actions IS NULL OR nombre_actions = 0)
-            """
-        )
-
-
-        cursor.execute(
-            """
-            UPDATE bourse
-
-            SET prix_actuel = valeur_actuelle
-
-            WHERE est_separateur = 0
-
-            AND (prix_actuel IS NULL OR prix_actuel = 0)
-            """
-        )
-
-    except sqlite3.OperationalError:
-
-        pass
 
 
     conn.commit()
@@ -1104,32 +985,68 @@ def create_database():
 
 def reset_database():
 
+    """
+    Efface toutes les donnees de l'application.
+
+    - Vide toutes les tables de donnees
+    - Remet a zero les compteurs d'identifiants
+    - Reinitialise le NIP a 1234 et vide les indices
+    - Supprime le fichier des champs du simulateur d'impot
+    - Conserve la copie de securite .backup
+    """
+
     conn = get_connection()
 
     cursor = conn.cursor()
 
 
+    # =========================
+    # TABLES A VIDER
+    # =========================
+
     tables_a_vider = [
 
         "entrees_argent",
+
         "sorties_argent",
+
         "placements_valeurs",
+
         "placements",
+
+        "plafonds",
+
         "prets",
+
         "hypotheques",
+
         "bourse",
+
         "reer_celi",
+
         "budget_mensuel",
+
         "amortissements",
+
         "rendements",
+
         "retraites",
+
         "travail_autonome",
+
         "assurances",
+
         "couvertures",
+
         "budgets",
+
         "budget_lignes",
+
         "patrimoine",
-        "cumulatifs"
+
+        "cumulatifs",
+
+        "deductions_impot"
 
     ]
 
@@ -1147,66 +1064,147 @@ def reset_database():
             pass
 
 
+    # =========================
+    # COMPTEURS D'IDENTIFIANTS
+    # =========================
+
+    # Remet les AUTOINCREMENT a 1.
+    # La table sqlite_sequence n'existe que si une table
+    # AUTOINCREMENT a deja recu une ligne.
+
+    try:
+
+        cursor.execute(
+            "DELETE FROM sqlite_sequence"
+        )
+
+    except sqlite3.OperationalError:
+
+        pass
+
+
+    # =========================
+    # TABLES A LIGNE UNIQUE
+    # =========================
+
     cursor.execute(
         """
-        UPDATE hypotheque
-
-        SET
-
-        valeur_condo = 0,
-
-        dette_actuelle = 0,
-
-        paiement_annuel = 0
-
-        WHERE id = 1
-
+        DELETE FROM hypotheque
         """
     )
 
 
     cursor.execute(
         """
-        UPDATE acomptes
+        INSERT INTO hypotheque
 
-        SET
+        (
+        id,
+        valeur_condo,
+        dette_actuelle,
+        paiement_annuel
+        )
 
-        provincial_paye = 0,
+        VALUES
 
-        federal_paye = 0
-
-        WHERE id = 1
-
+        (
+        1,
+        0,
+        0,
+        0
+        )
         """
     )
 
 
     cursor.execute(
         """
-        UPDATE plafonds
-
-        SET
-
-        reer_possible = 0,
-
-        celi_possible = 0
-
-        WHERE id = 1
-
+        DELETE FROM acomptes
         """
     )
 
 
     cursor.execute(
         """
-        UPDATE users
+        INSERT INTO acomptes
 
-        SET password = '1234',
-        indice1 = '',
-        indice2 = ''
+        (
+        id,
+        provincial_paye,
+        federal_paye
+        )
 
-        WHERE id = 1
+        VALUES
 
+        (
+        1,
+        0,
+        0
+        )
+        """
+    )
+
+
+    cursor.execute(
+        """
+        DELETE FROM plafonds
+        """
+    )
+
+
+    cursor.execute(
+        """
+        INSERT INTO plafonds
+
+        (
+        id,
+        reer_possible,
+        celi_possible
+        )
+
+        VALUES
+
+        (
+        1,
+        0,
+        0
+        )
+        """
+    )
+
+
+    # =========================
+    # UTILISATEUR
+    # =========================
+
+    cursor.execute(
+        """
+        DELETE FROM users
+        """
+    )
+
+
+    cursor.execute(
+        """
+        INSERT INTO users
+
+        (
+        id,
+        username,
+        password,
+        indice1,
+        indice2
+        )
+
+        VALUES
+
+        (
+        1,
+        'admin',
+        '1234',
+        '',
+        ''
+        )
         """
     )
 
@@ -1214,3 +1212,21 @@ def reset_database():
     conn.commit()
 
     conn.close()
+
+
+    # =========================
+    # FICHIER DU SIMULATEUR D'IMPOT
+    # =========================
+
+    # Les montants saisis dans le simulateur sont enregistres
+    # dans un fichier JSON, hors de la base.
+
+    try:
+
+        from pages.impot_parametres import effacer
+
+        effacer()
+
+    except Exception:
+
+        pass

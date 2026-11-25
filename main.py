@@ -10,7 +10,6 @@ from login import LoginWindow
 from app import MainWindow
 
 
-
 def resource_path(
     relative_path
 ):
@@ -33,7 +32,6 @@ def resource_path(
 
 fenetre_principale = None
 
-
 def ouvrir_application():
 
     global fenetre_principale
@@ -51,7 +49,7 @@ app = QApplication(sys.argv)
 
 
 app.setApplicationName(
-    "Mon bas de laine v1.3"
+    "Mon bas de laine v1.41"
 )
 
 

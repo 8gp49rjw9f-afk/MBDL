@@ -104,6 +104,12 @@ class BourseDialog(QDialog):
         boutons = QHBoxLayout()
         annuler = QPushButton("Annuler")
         sauvegarder = QPushButton("Sauvegarder")
+        sauvegarder.setDefault(
+            True
+        )
+        sauvegarder.setAutoDefault(
+            True
+        )
         boutons.addWidget(annuler)
         boutons.addWidget(sauvegarder)
         layout.addLayout(boutons)

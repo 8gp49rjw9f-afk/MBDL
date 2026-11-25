@@ -92,6 +92,14 @@ class EntreeEditDialog(QDialog):
         )
 
 
+        sauvegarder.setDefault(
+            True
+        )
+
+        sauvegarder.setAutoDefault(
+            True
+        )
+
 
         boutons.addWidget(
             annuler

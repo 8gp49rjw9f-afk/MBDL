@@ -35,7 +35,7 @@ class ReerCeliPage(QWidget):
 
         layout = QVBoxLayout()
 
-        titre = QLabel("REER / CELI")
+        titre = QLabel("Cotisations REER/CELI")
         titre.setStyleSheet("font-size:28px;font-weight:bold;")
         layout.addWidget(titre)
 

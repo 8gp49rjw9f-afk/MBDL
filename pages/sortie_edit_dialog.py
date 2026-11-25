@@ -92,6 +92,13 @@ class SortieEditDialog(QDialog):
         )
 
 
+        sauvegarder.setDefault(
+            True
+        )
+
+        sauvegarder.setAutoDefault(
+            True
+        )
 
         boutons.addWidget(
             annuler

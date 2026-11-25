@@ -103,6 +103,13 @@ class EntreeDialog(QDialog):
             "Sauvegarder"
         )
 
+        sauvegarder.setDefault(
+            True
+        )
+
+        sauvegarder.setAutoDefault(
+            True
+        )
 
         annuler = QPushButton(
             "Annuler"

@@ -132,6 +132,18 @@ class CumulatifConfigDialog(QDialog):
         boutons = QHBoxLayout()
         annuler = QPushButton("Annuler")
         sauvegarder = QPushButton("Sauvegarder")
+        sauvegarder.setDefault(
+            True
+        )
+        sauvegarder.setAutoDefault(
+            True
+        )
+        sauvegarder.setDefault(
+            True
+        )
+        sauvegarder.setAutoDefault(
+            True
+        )
         boutons.addStretch()
         boutons.addWidget(annuler)
         boutons.addWidget(sauvegarder)
